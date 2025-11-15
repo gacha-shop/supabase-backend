@@ -3,8 +3,8 @@
  * 비즈니스 로직 레이어 - 90% 재사용 가능!
  */
 
-import { createClient, type SupabaseClient } from "jsr:@supabase/supabase-js@2";
-import type { AuthUser } from "../types/auth.types.ts";
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import type { AuthUser } from '../types/auth.types.ts';
 import type {
   Shop,
   ShopCreateInput,
@@ -12,24 +12,20 @@ import type {
   ShopWithTags,
   ShopListFilters,
   PaginatedResponse,
-} from "../types/shop.types.ts";
-import {
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from "../utils/errors.ts";
-import { validateShopInput } from "../utils/validation.ts";
+} from '../types/shop.types.ts';
+import { ForbiddenError, NotFoundError } from '../utils/errors.ts';
+import { validateShopInput } from '../utils/validation.ts';
 
 export class ShopService {
   private supabase: SupabaseClient;
 
   constructor(private currentUser: AuthUser) {
     // Service Role Key로 Supabase 클라이언트 생성 (RLS 우회)
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Missing Supabase configuration");
+      throw new Error('Missing Supabase configuration');
     }
 
     this.supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -40,7 +36,7 @@ export class ShopService {
    */
   async createShop(input: ShopCreateInput): Promise<ShopWithTags> {
     // 권한 체크
-    this.requireRole(["super_admin", "admin"]);
+    this.requireRole(['super_admin', 'admin']);
 
     // 유효성 검사
     validateShopInput(input);
@@ -49,10 +45,10 @@ export class ShopService {
 
     // Shop 생성
     const { data: shop, error } = await this.supabase
-      .from("shops")
+      .from('shops')
       .insert({
         ...shopData,
-        data_source: "admin_input",
+        data_source: 'admin_input',
         created_by: this.currentUser.id,
         updated_by: this.currentUser.id,
       })
@@ -60,7 +56,7 @@ export class ShopService {
       .single();
 
     if (error) {
-      console.error("Shop insert error:", error);
+      console.error('Shop insert error:', error);
       throw new Error(`Failed to create shop: ${error.message}`);
     }
 
@@ -79,7 +75,7 @@ export class ShopService {
   async submitShop(input: ShopCreateInput): Promise<Shop> {
     // 로그인만 확인 (general_user도 가능)
     if (!this.currentUser.id) {
-      throw new ForbiddenError("Authentication required");
+      throw new ForbiddenError('Authentication required');
     }
 
     // 유효성 검사
@@ -88,11 +84,11 @@ export class ShopService {
     const { tag_ids, ...shopData } = input;
 
     const { data: shop, error } = await this.supabase
-      .from("shops")
+      .from('shops')
       .insert({
         ...shopData,
-        verification_status: "pending",
-        data_source: "user_input",
+        verification_status: 'pending',
+        data_source: 'user_input',
         created_by: this.currentUser.id,
       })
       .select()
@@ -112,7 +108,7 @@ export class ShopService {
     shopId: string,
     input: ShopUpdateInput
   ): Promise<ShopWithTags> {
-    this.requireRole(["super_admin", "admin"]);
+    this.requireRole(['super_admin', 'admin']);
 
     // 존재 확인
     await this.getShopById(shopId);
@@ -120,13 +116,13 @@ export class ShopService {
     const { tag_ids, ...updateData } = input;
 
     const { data: shop, error } = await this.supabase
-      .from("shops")
+      .from('shops')
       .update({
         ...updateData,
         updated_by: this.currentUser.id,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", shopId)
+      .eq('id', shopId)
       .select()
       .single();
 
@@ -149,7 +145,7 @@ export class ShopService {
     shopId: string,
     input: ShopUpdateInput
   ): Promise<ShopWithTags> {
-    this.requireRole(["owner"]);
+    this.requireRole(['owner']);
 
     // 소유권 검증
     await this.verifyOwnership(shopId);
@@ -158,12 +154,12 @@ export class ShopService {
     const allowedFields = this.filterOwnerEditableFields(input);
 
     const { data: shop, error } = await this.supabase
-      .from("shops")
+      .from('shops')
       .update({
         ...allowedFields,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", shopId)
+      .eq('id', shopId)
       .select()
       .single();
 
@@ -179,16 +175,16 @@ export class ShopService {
    */
   async deleteShop(shopId: string): Promise<void> {
     // Super Admin만 삭제 가능
-    this.requireRole(["super_admin"]);
+    this.requireRole(['super_admin']);
 
     const { error } = await this.supabase
-      .from("shops")
+      .from('shops')
       .update({
         is_deleted: true,
         deleted_at: new Date().toISOString(),
         updated_by: this.currentUser.id,
       })
-      .eq("id", shopId);
+      .eq('id', shopId);
 
     if (error) {
       throw new Error(`Failed to delete shop: ${error.message}`);
@@ -200,7 +196,7 @@ export class ShopService {
    */
   async getShopById(shopId: string): Promise<ShopWithTags> {
     const { data, error } = await this.supabase
-      .from("shops")
+      .from('shops')
       .select(
         `
         *,
@@ -210,8 +206,8 @@ export class ShopService {
         )
       `
       )
-      .eq("id", shopId)
-      .eq("is_deleted", false)
+      .eq('id', shopId)
+      .eq('is_deleted', false)
       .single();
 
     if (error || !data) {
@@ -225,7 +221,7 @@ export class ShopService {
    * Owner: 본인 매장 조회 (소유권 검증 포함)
    */
   async getMyShop(shopId: string): Promise<ShopWithTags> {
-    this.requireRole(["owner"]);
+    this.requireRole(['owner']);
 
     // 소유권 검증
     await this.verifyOwnership(shopId);
@@ -241,18 +237,18 @@ export class ShopService {
     filters: ShopListFilters
   ): Promise<PaginatedResponse<ShopWithTags>> {
     let query = this.supabase
-      .from("shops")
-      .select("*, shop_tags(tag_id, tags(*))", { count: "exact" })
-      .eq("is_deleted", false);
+      .from('shops')
+      .select('*, shop_tags(tag_id, tags(*))', { count: 'exact' })
+      .eq('is_deleted', false);
 
     // 권한별 필터링
-    if (filters.role === "owner" && filters.ownerId) {
+    if (filters.role === 'owner' && filters.ownerId) {
       // Owner: 본인 매장만
       const { data: ownerships } = await this.supabase
-        .from("shop_owners")
-        .select("shop_id")
-        .eq("owner_id", filters.ownerId)
-        .eq("verified", true);
+        .from('shop_owners')
+        .select('shop_id')
+        .eq('owner_id', filters.ownerId)
+        .eq('verified', true);
 
       const shopIds = ownerships?.map((o) => o.shop_id) || [];
       if (shopIds.length === 0) {
@@ -265,15 +261,15 @@ export class ShopService {
           totalPages: 0,
         };
       }
-      query = query.in("id", shopIds);
-    } else if (filters.role === "public") {
+      query = query.in('id', shopIds);
+    } else if (filters.role === 'public') {
       // 일반 사용자: verified만
-      query = query.eq("verification_status", "verified");
+      query = query.eq('verification_status', 'verified');
     }
 
     // 추가 필터
     if (filters.verificationStatus) {
-      query = query.eq("verification_status", filters.verificationStatus);
+      query = query.eq('verification_status', filters.verificationStatus);
     }
 
     // 페이징
@@ -283,7 +279,7 @@ export class ShopService {
     query = query.range(offset, offset + limit - 1);
 
     // 정렬
-    query = query.order("created_at", { ascending: false });
+    query = query.order('created_at', { ascending: false });
 
     const { data, error, count } = await query;
 
@@ -304,21 +300,21 @@ export class ShopService {
 
   private requireRole(allowedRoles: string[]): void {
     if (!allowedRoles.includes(this.currentUser.role)) {
-      throw new ForbiddenError(`Requires one of: ${allowedRoles.join(", ")}`);
+      throw new ForbiddenError(`Requires one of: ${allowedRoles.join(', ')}`);
     }
   }
 
   private async verifyOwnership(shopId: string): Promise<void> {
     const { data, error } = await this.supabase
-      .from("shop_owners")
-      .select("id")
-      .eq("shop_id", shopId)
-      .eq("owner_id", this.currentUser.id)
-      .eq("verified", true)
+      .from('shop_owners')
+      .select('id')
+      .eq('shop_id', shopId)
+      .eq('owner_id', this.currentUser.id)
+      .eq('verified', true)
       .maybeSingle();
 
     if (error || !data) {
-      throw new ForbiddenError("You do not own this shop");
+      throw new ForbiddenError('You do not own this shop');
     }
   }
 
@@ -326,14 +322,14 @@ export class ShopService {
     input: ShopUpdateInput
   ): Partial<ShopUpdateInput> {
     const allowedFields = [
-      "description",
-      "phone",
-      "business_hours",
-      "is_24_hours",
-      "gacha_machine_count",
-      "main_series",
-      "detail_address",
-      "social_urls",
+      'description',
+      'phone',
+      'business_hours',
+      'is_24_hours',
+      'gacha_machine_count',
+      'main_series',
+      'detail_address',
+      'social_urls',
     ];
 
     return Object.keys(input)
@@ -354,17 +350,17 @@ export class ShopService {
       created_by: this.currentUser.id,
     }));
 
-    const { error } = await this.supabase.from("shop_tags").insert(shopTags);
+    const { error } = await this.supabase.from('shop_tags').insert(shopTags);
 
     if (error) {
-      console.error("Tags insert error:", error);
+      console.error('Tags insert error:', error);
       // Tags 실패는 Shop 생성을 막지 않음
     }
   }
 
   private async replaceTags(shopId: string, tagIds: string[]): Promise<void> {
     // 기존 tags 삭제
-    await this.supabase.from("shop_tags").delete().eq("shop_id", shopId);
+    await this.supabase.from('shop_tags').delete().eq('shop_id', shopId);
 
     // 새 tags 추가
     if (tagIds.length > 0) {

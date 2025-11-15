@@ -3,7 +3,7 @@
  * 일반 유저 DB 접근 레이어
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import type {
   GeneralUser,
   GeneralUserCreateInput,
@@ -147,7 +147,10 @@ export class GeneralUserRepository {
   /**
    * 닉네임 중복 체크
    */
-  async isNicknameAvailable(nickname: string, excludeUserId?: string): Promise<boolean> {
+  async isNicknameAvailable(
+    nickname: string,
+    excludeUserId?: string
+  ): Promise<boolean> {
     let query = this.supabase
       .from('general_users')
       .select('id')
