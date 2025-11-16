@@ -22,13 +22,21 @@ export class MenuService {
 
   /**
    * 로그인한 유저가 접근 가능한 메뉴 조회 (계층 구조)
-   * - super_admin: 모든 활성 메뉴
+   * - adminId가 명시적으로 제공된 경우: 해당 유저의 권한만 조회
+   * - adminId가 없고 super_admin: 모든 활성 메뉴
    * - 그 외: admin_menu_permissions에 등록된 메뉴만
    */
   async getAdminMenus(adminId?: string): Promise<MenuWithChildren[]> {
     const targetAdminId = adminId || this.currentUser.id;
 
-    // super_admin이면 모든 활성 메뉴 반환
+    // adminId가 명시적으로 제공된 경우, 해당 유저의 권한만 조회
+    // (호출자의 role과 관계없이 특정 유저의 권한을 조회)
+    if (adminId) {
+      const menus = await this.menuRepository.findMenusByAdminId(targetAdminId);
+      return this.menuRepository.buildMenuTree(menus);
+    }
+
+    // adminId가 없고 현재 유저가 super_admin이면 모든 활성 메뉴 반환
     if (this.currentUser.role === 'super_admin') {
       const menus = await this.menuRepository.findAllActive();
       return this.menuRepository.buildMenuTree(menus);
