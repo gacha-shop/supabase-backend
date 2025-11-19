@@ -12,7 +12,7 @@ export interface SNS {
 export interface Shop {
   id: string;
   name: string;
-  shop_type: string;
+  shop_type: string[]; // Array of shop types: gacha, figure, claw, etc.
   description: string | null;
   phone: string | null;
   latitude: number | null;
@@ -41,7 +41,7 @@ export interface Shop {
 
 export interface ShopCreateInput {
   name: string;
-  shop_type: string;
+  shop_type: string[]; // Array of shop types: gacha, figure, claw, etc.
   description?: string;
   phone?: string;
   latitude?: number;
@@ -63,6 +63,7 @@ export interface ShopCreateInput {
 
 export interface ShopUpdateInput {
   name?: string;
+  shop_type?: string[];
   description?: string;
   phone?: string;
   latitude?: number;
