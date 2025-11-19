@@ -3,7 +3,7 @@
  * 유저 제보 DB 접근 레이어
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import type {
   UserSubmission,
   UserSubmissionDetail,
@@ -50,12 +50,14 @@ export class UserSubmissionRepository {
   async findById(id: string): Promise<UserSubmissionDetail | null> {
     const { data, error } = await this.supabase
       .from('user_submissions')
-      .select(`
+      .select(
+        `
         *,
         shop:shops(id, name, address_full, verification_status),
         submitter:general_users(id, email, nickname),
         reviewer:admin_users(id, email, full_name)
-      `)
+      `
+      )
       .eq('id', id)
       .single();
 
@@ -167,11 +169,13 @@ export class UserSubmissionRepository {
   async findByShopId(shopId: string): Promise<UserSubmissionDetail[]> {
     const { data, error } = await this.supabase
       .from('user_submissions')
-      .select(`
+      .select(
+        `
         *,
         submitter:general_users(id, email, nickname),
         reviewer:admin_users(id, email, full_name)
-      `)
+      `
+      )
       .eq('shop_id', shopId)
       .order('submitted_at', { ascending: false });
 
@@ -215,7 +219,10 @@ export class UserSubmissionRepository {
       .from('user_submissions')
       .select('*', { count: 'exact', head: true })
       .eq('submitter_id', submitterId)
-      .gte('submitted_at', new Date(Date.now() - withinHours * 60 * 60 * 1000).toISOString());
+      .gte(
+        'submitted_at',
+        new Date(Date.now() - withinHours * 60 * 60 * 1000).toISOString()
+      );
 
     if (error) throw error;
     return count || 0;
