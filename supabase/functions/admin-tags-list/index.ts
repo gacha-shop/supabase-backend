@@ -4,7 +4,11 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { authenticate, requireAdmin } from "../_shared/auth/middleware.ts";
+import {
+  authenticate,
+  requireAdmin,
+  requireAuthenticated,
+} from "../_shared/auth/middleware.ts";
 import { TagService } from "../_shared/services/tag.service.ts";
 import {
   createErrorResponse,
@@ -19,7 +23,7 @@ serve(async (req) => {
 
   try {
     const user = await authenticate(req);
-    requireAdmin(user);
+    requireAuthenticated(user);
 
     const service = new TagService(user);
     const tags = await service.listTags();
