@@ -31,8 +31,16 @@ export function validateShopInput(input: ShopCreateInput): void {
     throw new ValidationError('Sido (city/province) is required');
   }
 
-  if (!input.shop_type || input.shop_type.trim().length === 0) {
-    throw new ValidationError('Shop type is required');
+  // shop_type은 배열이므로 배열 검증
+  if (!input.shop_type || !Array.isArray(input.shop_type) || input.shop_type.length === 0) {
+    throw new ValidationError('Shop type is required (at least one type must be selected)');
+  }
+
+  // 유효한 shop_type 값들만 허용
+  const validShopTypes = ['gacha', 'figure', 'claw'];
+  const invalidTypes = input.shop_type.filter(type => !validShopTypes.includes(type));
+  if (invalidTypes.length > 0) {
+    throw new ValidationError(`Invalid shop types: ${invalidTypes.join(', ')}. Allowed: ${validShopTypes.join(', ')}`);
   }
 
   // 좌표 검증 (한국 범위)
