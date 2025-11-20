@@ -151,7 +151,8 @@ export class ShopService {
     await this.verifyOwnership(shopId);
 
     // Owner가 수정 가능한 필드만 허용
-    const allowedFields = this.filterOwnerEditableFields(input);
+    const { tag_ids, ...otherFields } = input;
+    const allowedFields = this.filterOwnerEditableFields(otherFields);
 
     const { data: shop, error } = await this.supabase
       .from('shops')
@@ -165,6 +166,11 @@ export class ShopService {
 
     if (error) {
       throw new Error(`Failed to update shop: ${error.message}`);
+    }
+
+    // Tags 업데이트 (있는 경우)
+    if (tag_ids !== undefined) {
+      await this.replaceTags(shopId, tag_ids);
     }
 
     return await this.getShopById(shopId);
@@ -322,6 +328,8 @@ export class ShopService {
     input: ShopUpdateInput
   ): Partial<ShopUpdateInput> {
     const allowedFields = [
+      'name',
+      'shop_type',
       'description',
       'phone',
       'business_hours',
